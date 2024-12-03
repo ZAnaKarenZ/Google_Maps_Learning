@@ -3,22 +3,13 @@ import { useState, useEffect } from 'react';
 import * as Location from 'expo-location';
 import { View, Button, StyleSheet, Alert } from 'react-native';
 
-type Restaurant = {
-
-    location: {
-      lat: number;
-      lng: number;
-    };
-  
-  name: string;
-  vicinity: string;
-};
-
 const MostrarMapa = () => {
-  const [location, setLocation] = useState<Location.LocationObject | null>(null);
-  const [showTraffic, setShowTraffic] = useState<boolean>(false);
-  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [location, setLocation] = useState<Location.LocationObject | null>(null);     //Sets current location of user
+  const [showTraffic, setShowTraffic] = useState<boolean>(false);                     //Boolean flag for traffic
+  const [showRestaurants, setShowRestaurants] = useState<boolean>(false);             //Boolean flag for restaurants
+  const [restaurants, setRestaurants] = useState<Restaurant[]>([]);                   //Array to store nearby restaurants
 
+  //Ask user for permission to their location and set that location in the map
   useEffect(() => {
     (async () => {
       try {
@@ -37,25 +28,34 @@ const MostrarMapa = () => {
     })();
   }, []);
 
+  //Restaurant object with latitude, longitude, name and address
+  type Restaurant = {
+    id: string;
+    name: string;
+    address: string;
+    location: {
+      latitude: number;
+      longitude: number;
+    };
+  };
+
+  //Find all restaurants in a given radius from current location
   const fetchRestaurants = async () => {
     if (!location) {
       Alert.alert('Error', 'No se pudo obtener la ubicación actual.');
       return;
     }
 
+    //Look for nearby restaurants using the API key
     const apiKey = '';
     const radius = 500;
     const type = 'restaurant';
-
-    console.log(location.coords.latitude);
-    console.log(location.coords.longitude);
-
     const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${location.coords.latitude},${location.coords.longitude}&radius=${radius}&type=${type}&key=${apiKey}`;
-
     try {
       const response = await fetch(url);
       const data = await response.json();
 
+      //If restaurants were found, create a a list of objects type restaurant with them
       if (data.results  && data.results.length > 0) {
         const places = data.results.map((place: any) => ({
           id: place.place_id,
@@ -67,7 +67,6 @@ const MostrarMapa = () => {
           },
         }));
         console.log(places);
-
         setRestaurants(places);
       } else {
         Alert.alert('Error', 'No se encontraron restaurantes.');
@@ -80,6 +79,7 @@ const MostrarMapa = () => {
 
   return (
     <View style={styles.container}>
+      {/* Shows user location or predetermined location and if showTraffic is true, it shows the traffic*/}
       <MapView
         style={styles.map}
         region={{
@@ -90,14 +90,18 @@ const MostrarMapa = () => {
         }}
         showsTraffic={showTraffic}
       >
-          <Marker
-            coordinate={{
-              latitude: location?.coords.latitude || 37.78825,
-              longitude: location?.coords.longitude || -122.4324,
-            }}
-            title="Mi ubicación"
-          />
+      
+      {/*Adds a marker in the current user location or default location*/}
+      <Marker
+          coordinate={{
+            latitude: location?.coords.latitude || 37.78825,
+            longitude: location?.coords.longitude || -122.4324,
+          }}
+          title="Mi ubicación"
+          pinColor="blue"
+      />
 
+      {/*Adds a marker for each restaurant found*/}
         {restaurants.map((restaurant) => (
           <Marker
             key={restaurant.id}
@@ -110,6 +114,8 @@ const MostrarMapa = () => {
           />
         ))}
       </MapView>
+
+      {/*Adds buttons for traffic and nearby restaurants*/}
       <View style={styles.buttonContainer}>
         <Button
           title={showTraffic ? 'Ocultar tráfico' : 'Mostrar tráfico'}
