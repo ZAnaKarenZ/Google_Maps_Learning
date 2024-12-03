@@ -1,7 +1,7 @@
 import MapView, { Marker } from 'react-native-maps';
 import { useState, useEffect } from 'react';
 import * as Location from 'expo-location';
-import { View, Button, StyleSheet, Alert } from 'react-native';
+import { View, Button, StyleSheet, Alert, Text, TouchableOpacity } from 'react-native';
 
 const MostrarMapa = () => {
   const [location, setLocation] = useState<Location.LocationObject | null>(null);     //Sets current location of user
@@ -66,7 +66,6 @@ const MostrarMapa = () => {
             longitude: place.geometry.location.lng,
           },
         }));
-        console.log(places);
         setRestaurants(places);
       } else {
         Alert.alert('Error', 'No se encontraron restaurantes.');
@@ -77,9 +76,18 @@ const MostrarMapa = () => {
     }
   };
 
+  // Toggle for restaurant visibility
+  const toggleRestaurants = () => {
+    //Fetches restaurants again to account for possible location change by the user (could be optimized)
+    if (!showRestaurants) {
+      fetchRestaurants();
+    }
+    setShowRestaurants(!showRestaurants);
+  };
+  
   return (
     <View style={styles.container}>
-      {/* Shows user location or predetermined location and if showTraffic is true, it shows the traffic*/}
+      {/*Shows user location or predetermined location and if showTraffic is true, it shows the traffic*/}
       <MapView
         style={styles.map}
         region={{
@@ -102,7 +110,7 @@ const MostrarMapa = () => {
       />
 
       {/*Adds a marker for each restaurant found*/}
-        {restaurants.map((restaurant) => (
+      {showRestaurants && restaurants.map((restaurant) => (
           <Marker
             key={restaurant.id}
             coordinate={{
@@ -117,15 +125,29 @@ const MostrarMapa = () => {
 
       {/*Adds buttons for traffic and nearby restaurants*/}
       <View style={styles.buttonContainer}>
-        <Button
-          title={showTraffic ? 'Ocultar tráfico' : 'Mostrar tráfico'}
+        {/* Toggle Traffic */}
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            showTraffic ? styles.activeButton : styles.inactiveButton,
+          ]}
           onPress={() => setShowTraffic(!showTraffic)}
-        />
-        <Button
-          title="Mostrar restaurantes cercanos"
-          onPress={fetchRestaurants}
-          color="green"
-        />
+        >
+        <Text style={styles.buttonText}>
+          {showTraffic ? 'Ocultar tráfico' : 'Mostrar tráfico'}
+        </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            showRestaurants ? styles.activeButton : styles.inactiveButton,
+          ]}
+          onPress={toggleRestaurants}
+        >
+          <Text style={styles.buttonText}>
+            {showRestaurants ? 'Ocultar restaurantes' : 'Mostrar restaurantes'}
+          </Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -142,12 +164,31 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 20,
     left: 20,
-    height: '8%',
+    height: '13%',
+    width: '90%',
     right: 20,
     top: 100,
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     borderRadius: 10,
     padding: 10,
+  },
+  toggleButton: {
+    padding: 10,
+    borderRadius: 10,
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 10
+  },
+  activeButton: {
+    backgroundColor: 'blue',
+  },
+  inactiveButton: {
+    backgroundColor: 'gray',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
