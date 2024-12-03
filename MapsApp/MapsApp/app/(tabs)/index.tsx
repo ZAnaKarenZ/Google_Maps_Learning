@@ -90,7 +90,13 @@ const MostrarMapa = () => {
         }}
         showsTraffic={showTraffic}
       >
-
+          <Marker
+            coordinate={{
+              latitude: location?.coords.latitude || 37.78825,
+              longitude: location?.coords.longitude || -122.4324,
+            }}
+            title="Mi ubicación"
+          />
 
         {restaurants.map((restaurant) => (
           <Marker
